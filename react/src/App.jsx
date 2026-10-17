@@ -1,32 +1,68 @@
 import MovieCard from "./components/MovieCard";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 function App() {
-  const title = "Мой каталог фильмов";
-  const movieCount = 3;
+  // Данные с сервера
+  const [movies, setMovies] = useState([]);
 
-  const [movies, setMovies] = useState([
-    {
-      id: 1,
-      title: "Матрица",
-      year: 1997,
-      genre: "Фантастика",
-      isFavorite: false,
-    },
-    {
-      id: 2,
-      title: "Властелин колец",
-      year: 2001,
-      genre: ["Фантастика", "Слешер"],
-      isFavorite: true,
-    },
-    {
-      id: 3,
-      title: "Эффект бабочки",
-      year: 2005,
-      genre: "Фантастика",
-      isFavorite: false,
-    },
-  ]);
+  // Состояния загрузки
+
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Локальные значения
+  const [search, setSearch] = useState("");
+  const [favoritesOnly, setFavoritesOnly] = useState(false);
+  const [genre, setGenre] = useState("all");
+
+  function normallizeMovie(item) {
+    const show = item.show;
+    return {
+      id: show.id,
+      title: show.name,
+      genres: show.genres ?? [],
+      rating: show.rating?.average ?? null,
+      image: show.image?.medium ?? null,
+      isFavotire: false,
+    };
+  }
+  useEffect(() => {
+    const controller = new AbortController();
+    async function loadMovies() {
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await fetch(
+          "https://api.tvmaze.com/search/shows?q=star",
+          {
+            signal: controller.signal,
+          },
+        );
+
+        if (!response.ok) {
+          throw new Error(response.status);
+        }
+
+        console.log("test");
+
+        const data = await response.json();
+        console.log(data);
+        const normallizeMovies = data.map(normallizeMovie);
+
+        if (!controller.signal.aborted) {
+          setMovies(normallizeMovies);
+        }
+      } catch (error) {
+        setError(error.message);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadMovies();
+    return () => {
+      controller.abort();
+    };
+  }, []);
+
   function handleToggleFavorite(id) {
     setMovies((prevMovies) =>
       prevMovies.map((movie) =>
@@ -34,15 +70,49 @@ function App() {
       ),
     );
   }
-
   function handleDelete(id) {
     setMovies((prevMovies) => prevMovies.filter((movie) => movie.id !== id));
   }
+  function handleChange(event) {
+    setSearch(event.target.value);
+  }
+
+  const filteredMovies = movies.filter((movie) => {
+    const matchesSearch = movie.title
+      .toLowerCase()
+      .includes(search.trim().toLocaleLowerCase());
+
+    const matchesGenre = genre === "all" || movie.genre === genre;
+
+    const matchesFav = !favoritesOnly || movie.isFavorite;
+
+    return matchesSearch && matchesGenre && matchesFav;
+  });
+
   return (
     <main>
-      <h1>{title}</h1>
-      <p className="desc">Всего фильмов {movieCount}</p>
-      {movies.map((movie) => (
+      <input type="text" id="search" value={search} onChange={handleChange} />
+      <select
+        id="genre"
+        value={genre}
+        onChange={(event) => setGenre(event.target.value)}
+      >
+        <option value="all">Все жанры</option>
+        <option value="Фантастика">Фантастика</option>
+        <option value="Боевик">Боевик</option>
+        <option value="Триллер">Триллер</option>
+      </select>
+      <label>
+        <input
+          type="checkbox"
+          checked={favoritesOnly}
+          onChange={(event) => setFavoritesOnly(event.target.checked)}
+        />
+        Только избранные
+      </label>
+      <hr />
+
+      {filteredMovies.map((movie) => (
         <MovieCard
           onToggleFavorite={handleToggleFavorite}
           movie={movie}
@@ -50,8 +120,8 @@ function App() {
           key={movie.id}
         />
       ))}
+      <hr />
     </main>
   );
 }
-
 export default App;

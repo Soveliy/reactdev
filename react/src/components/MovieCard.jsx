@@ -1,6 +1,8 @@
 function MovieCard({ movie, onDelete, onToggleFavorite }) {
   return (
     <article className="movie">
+      <img src={movie.image} alt="" />
+
       <h2 className="movieTitle"> {movie.title} </h2>
       <p>Год {movie.year}</p>
       <p>Жанр {movie.genre}</p>
