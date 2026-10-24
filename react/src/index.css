@@ -123,3 +123,7 @@ code {
 .fav-button--active {
   background-color: rgb(149, 20, 20);
 }
+
+a.active {
+  color: red;
+}
