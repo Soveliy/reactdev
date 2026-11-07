@@ -6,7 +6,7 @@ import EmailField from "../components/useid";
 import CatalogUseMemo from "../components/useMemoEf";
 
 const ThemeContext = createContext("light");
-console.log("hello");
+
 function useCounter(init = 0) {
   const [count, setCount] = useState(init);
   function increment() {

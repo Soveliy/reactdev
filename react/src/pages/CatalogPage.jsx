@@ -1,11 +1,13 @@
 import MovieCard from "../components/MovieCard";
 import { useEffect, useState } from "react";
 import { searchShows } from "../api/api";
+import useFavorites from "../hooks/useFavorites";
 function CatalogPage() {
   // Данные с сервера
   const [movies, setMovies] = useState([]);
   const [search, setSearch] = useState("Star");
   const [shows, setShows] = useState([]);
+  const { favorites } = useFavorites();
   // Состояния загрузки
 
   const [loading, setLoading] = useState(true);
@@ -54,43 +56,6 @@ function CatalogPage() {
       isFavotire: false,
     };
   }
-  //   useEffect(() => {
-  //     const controller = new AbortController();
-  //     async function loadMovies() {
-  //       try {
-  //         setLoading(true);
-  //         setError(null);
-  //         const response = await fetch(
-  //           "https://api.tvmaze.com/search/shows?q=star",
-  //           {
-  //             signal: controller.signal,
-  //           },
-  //         );
-
-  //         if (!response.ok) {
-  //           throw new Error(response.status);
-  //         }
-
-  //         console.log("test");
-
-  //         const data = await response.json();
-  //         console.log(data);
-  //         const normallizeMovies = data.map(normallizeMovie);
-
-  //         if (!controller.signal.aborted) {
-  //           setMovies(normallizeMovies);
-  //         }
-  //       } catch (error) {
-  //         setError(error.message);
-  //       } finally {
-  //         setLoading(false);
-  //       }
-  //     }
-  //     loadMovies();
-  //     return () => {
-  //       controller.abort();
-  //     };
-  //   }, []);
 
   function handleToggleFavorite(id) {
     setMovies((prevMovies) =>
@@ -113,7 +78,8 @@ function CatalogPage() {
 
     const matchesGenre = genre === "all" || movie.genre === genre;
 
-    const matchesFav = !favoritesOnly || movie.isFavorite;
+    const matchesFav =
+      !favoritesOnly || favorites.some((item) => item.id === movie.id);
 
     return matchesSearch && matchesGenre && matchesFav;
   });
@@ -168,12 +134,7 @@ function CatalogPage() {
       ) : (
         <div>
           {filteredMovies.map((movie) => (
-            <MovieCard
-              onToggleFavorite={handleToggleFavorite}
-              movie={movie}
-              onDelete={handleDelete}
-              key={movie.id}
-            />
+            <MovieCard movie={movie} key={movie.id} />
           ))}
         </div>
       )}

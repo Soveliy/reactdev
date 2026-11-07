@@ -1,13 +1,14 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import { getShowById } from "../api/api";
+import useFavorites from "../hooks/useFavorites";
 function ShowPage() {
   const { id } = useParams();
+  const { favorites, toggleFavorite } = useFavorites();
 
   const [show, setShow] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-
   useEffect(() => {
     const controller = new AbortController();
     async function loadShow() {
@@ -42,10 +43,26 @@ function ShowPage() {
   if (!show) {
     return <b>Сериал не найден</b>;
   }
+  const movie = {
+    id: show.id,
+    title: show.name,
+    genres: show.genres ?? [],
+    rating: show.rating?.average ?? null,
+    image: show.image?.medium ?? null,
+    url: show.url ?? null,
+  };
+  const isFavorite = favorites.some((item) => item.id === movie.id);
+
   return (
     <div>
-      <img src={show.image.original} alt="" />
-      <h1>{show.name}</h1>;
+      <img src={show.image?.original} alt="" />
+      <h1>{show.name}</h1>
+      <button
+        className={isFavorite ? "fav-button fav-button--active" : "fav-button"}
+        onClick={() => toggleFavorite(movie)}
+      >
+        {isFavorite ? "В избранном ★" : "Добавить в избранное ☆"}
+      </button>
     </div>
   );
 }
